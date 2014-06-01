@@ -1,0 +1,68 @@
+#
+# Change the following variables according
+# to your system environment
+#
+GCC_PREFIX = /usr
+CC_CMD = gcc
+LD_CMD = gcc
+CC = $(GCC_PREFIX)/bin/$(CC_CMD)
+LD = $(GCC_PREFIX)/bin/$(LD_CMD)
+PKG_DIR = /opsec
+
+#
+# uncomment the following setings for dynamic unixodbc support
+#ODBC_CFLAGS = -DDYNAMIC_UNIXODBC -DODBCVER=0x0350 -DUSE_ODBC -I/usr/local/unixodbc/include
+#ODBC_LIBS   = /usr/local/unixodbc/lib/libodbc.so /usr/local/unixodbc/lib/libodbcinst.so
+#
+# uncomment the following setings for static unixodbc support
+#ODBC_CFLAGS = -DSTATIC_UNIXODBC -DODBCVER=0x0350 -DUSE_ODBC -I/usr/local/unixodbc/include
+#ODBC_LIBS   = /usr/local/unixodbc/lib/libodbc.a /usr/local/unixodbc/lib/libodbcinst.a
+#
+# uncomment the following setings for dynamic iodbc support
+#ODBC_CFLAGS = -DDYNAMIC_IODBC -DODBCVER=0x0350 -DUSE_ODBC -I/usr/local/include
+#ODBC_LIBS   = /usr/local/lib/libiodbc.so /usr/local/lib/libiodbcinst.so
+#
+# uncomment the following setings for static iodbc support
+#ODBC_CFLAGS = -DSTATIC_IODBC -DODBCVER=0x0350 -DUSE_ODBC -I/usr/local/include
+#ODBC_LIBS   = /usr/local/lib/libiodbc.a /usr/local/lib/libiodbcinst.a
+
+#
+# you should not need to touch anything below
+#
+EXE_NAME = lea_client
+OBJ_FILES = lea_client.o
+
+LIB_DIR = $(PKG_DIR)/lib/release.static
+CPC_DIR = $(PKG_DIR)/lib/lib/static
+
+STATIC_LIBS = \
+	-lopsec \
+	-lsicauth -lsic \
+	-lcp_policy \
+	-lskey \
+	-lndb \
+	-lckpssl -lcpcert \
+	-lcpcryptutil -lcpprng \
+	-lcpbcrypt -lcpca \
+	-lasn1cpp \
+	-lcpopenssl \
+	-lAppUtils -lEventUtils \
+	-lEncode -lComUtils \
+	-lResolve -lDataStruct \
+	-lOS \
+	-lcpprod50 
+
+LIBS = -lpthread -lresolv -ldl -lnsl -lstdc++
+#LIBS = -lpthread -lresolv -ldl -lpam -lnsl -lelf $(CPC_DIR)/libcpc++-3-libc6.1-2-2.10.0.a $(ODBC_LIBS)
+#LIBS = -lpthread -lresolv -ldl -lnsl -lelf -lcpc++
+CFLAGS += -g -Wall -fpic -I$(PKG_DIR)/include -DLINUX -DUNIXOS=1 -DDEBUG $(ODBC_CFLAGS)
+
+%.o: %.c
+	$(CC) -static $(CFLAGS) -c -o $@ $*.c
+
+$(EXE_NAME): $(OBJ_FILES)
+	$(LD) -static-libgcc $(CFLAGS) -L$(LIB_DIR) -L$(CPC_DIR) -o $@ $(OBJ_FILES) $(STATIC_LIBS) $(LIBS)
+#	$(LD) -static $(CFLAGS) -L$(LIB_DIR) -L$(CPC_DIR) -o $@ $(OBJ_FILES) $(STATIC_LIBS) $(LIBS)
+
+clean:
+	rm *.o $(EXE_NAME)
