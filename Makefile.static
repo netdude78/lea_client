@@ -7,8 +7,7 @@ CC_CMD = gcc
 LD_CMD = gcc
 CC = $(GCC_PREFIX)/bin/$(CC_CMD)
 LD = $(GCC_PREFIX)/bin/$(LD_CMD)
-#PKG_DIR = /opsec
-PKG_DIR = /opt/OPSEC_SDK_6.0_Linux/opsec22/pkg_rel
+PKG_DIR = /opsec
 
 #
 # uncomment the following setings for dynamic unixodbc support
@@ -33,32 +32,37 @@ PKG_DIR = /opt/OPSEC_SDK_6.0_Linux/opsec22/pkg_rel
 EXE_NAME = lea_client
 OBJ_FILES = lea_client.o
 
-LIB_DIR = $(PKG_DIR)/lib/release.dynamic
-CPC_DIR = $(PKG_DIR)/lib/lib/dynamic/
+LIB_DIR = $(PKG_DIR)/lib/release.static
+CPC_DIR = $(PKG_DIR)/lib/lib/static
 
-LIBS = -lpthread -lresolv -ldl -lnsl -lopsec -lsic \
-	/usr/lib/libelf.so.1 \
-	-lsicauth -lcp_policy -lskey -lndb \
-	-lckpssl \
-	-lcpcert \
+STATIC_LIBS = \
+	-lopsec \
+	-lsicauth -lsic \
+	-lcp_policy \
+	-lskey \
+	-lndb \
+	-lckpssl -lcpcert \
 	-lcpcryptutil -lcpprng \
 	-lcpbcrypt -lcpca \
+	-lasn1cpp \
 	-lcpopenssl \
 	-lAppUtils -lEventUtils \
 	-lEncode -lComUtils \
 	-lResolve -lDataStruct \
 	-lOS \
-	-lcpprod50
+	-lcpprod50 
 
-#/lib/libpam.so.0 $(CPC_DIR)/libcpc++-libc6.1-2.so.3
-
-CFLAGS += -m32 -g -Wall -fPIC -I$(PKG_DIR)/include -DLINUX -DUNIXOS=1 -DDEBUG $(ODBC_CFLAGS)
+LIBS = -lpthread -lresolv -ldl -lnsl -lstdc++
+#LIBS = -lpthread -lresolv -ldl -lpam -lnsl -lelf $(CPC_DIR)/libcpc++-3-libc6.1-2-2.10.0.a $(ODBC_LIBS)
+#LIBS = -lpthread -lresolv -ldl -lnsl -lelf -lcpc++
+CFLAGS += -g -Wall -fpic -I$(PKG_DIR)/include -DLINUX -DUNIXOS=1 -DDEBUG $(ODBC_CFLAGS)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $*.c
+	$(CC) -static $(CFLAGS) -c -o $@ $*.c
 
 $(EXE_NAME): $(OBJ_FILES)
-	$(LD) $(CFLAGS) -L$(LIB_DIR) -o $@ $(OBJ_FILES)  $(LIBS)
+	$(LD) -static-libgcc $(CFLAGS) -L$(LIB_DIR) -L$(CPC_DIR) -o $@ $(OBJ_FILES) $(STATIC_LIBS) $(LIBS)
+#	$(LD) -static $(CFLAGS) -L$(LIB_DIR) -L$(CPC_DIR) -o $@ $(OBJ_FILES) $(STATIC_LIBS) $(LIBS)
 
 clean:
-	rm -f *.o $(EXE_NAME)
+	rm *.o $(EXE_NAME)
